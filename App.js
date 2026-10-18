@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler'; // <-- YE LINE SAB SE UPAR LAZMI HAI
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -41,7 +42,6 @@ function AppNavigator() {
   return (
     <NavigationContainer theme={navigationTheme}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{
@@ -49,62 +49,21 @@ function AppNavigator() {
             backgroundColor: isDarkMode ? '#242424' : '#FFFFFF',
           },
           headerTintColor: isDarkMode ? '#FFFFFF' : '#222222',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          headerTitleStyle: { fontWeight: 'bold' },
           headerShadowVisible: false,
           contentStyle: {
             backgroundColor: isDarkMode ? '#121212' : '#F5F5F5',
           },
         }}
       >
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name="Menu"
-          component={MenuScreen}
-          options={{ title: 'Restaurant Menu' }}
-        />
-
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ title: 'My Profile' }}
-        />
-
-        <Stack.Screen
-          name="Cart"
-          component={CartScreen}
-          options={{ title: 'My Cart' }}
-        />
-
-        <Stack.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{ title: 'Manager Dashboard' }}
-        />
-
-        <Stack.Screen
-          name="Orders"
-          component={OrdersScreen}
-          options={{ title: 'Manage Orders' }}
-        />
-
-        <Stack.Screen
-          name="OrderHistory"
-          component={OrderHistoryScreen}
-          options={{ title: 'My Order History' }}
-        />
-
-        <Stack.Screen
-          name="Reservation"
-          component={ReservationScreen}
-          options={{ title: 'Table Reservation' }}
-        />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Menu" component={MenuScreen} options={{ title: 'Restaurant Menu' }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My Profile' }} />
+        <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'My Cart' }} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Manager Dashboard' }} />
+        <Stack.Screen name="Orders" component={OrdersScreen} options={{ title: 'Manage Orders' }} />
+        <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} options={{ title: 'My Order History' }} />
+        <Stack.Screen name="Reservation" component={ReservationScreen} options={{ title: 'Table Reservation' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

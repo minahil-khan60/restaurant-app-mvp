@@ -1,4 +1,3 @@
-```jsx
 import React from 'react';
 import {
   View,
@@ -316,4 +315,3 @@ const getStyles = (colors) =>
       borderRadius: 10,
     },
   });
-```

@@ -1,4 +1,3 @@
-```jsx
 import React, { useState } from 'react';
 import {
   View,
@@ -493,4 +492,3 @@ const getStyles = (colors) =>
       borderRadius: 7,
     },
   });
-```
