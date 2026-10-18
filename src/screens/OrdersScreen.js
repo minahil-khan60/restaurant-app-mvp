@@ -9,10 +9,25 @@ import {
 } from 'react-native';
 
 import { useOrders } from '../context/OrderContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function OrdersScreen() {
   const { orders, updateOrderStatus } = useOrders();
-  console.log('TOTAL ORDERS:', orders.length, orders);
+  const { isDarkMode } = useTheme();
+
+  const colors = {
+    background: isDarkMode ? '#121212' : '#F7F7F7',
+    card: isDarkMode ? '#242424' : '#FFFFFF',
+    text: isDarkMode ? '#FFFFFF' : '#222222',
+    secondary: isDarkMode ? '#BBBBBB' : '#777777',
+    heading: isDarkMode ? '#EEEEEE' : '#333333',
+    button: isDarkMode ? '#383838' : '#EEEEEE',
+    buttonText: isDarkMode ? '#FFFFFF' : '#333333',
+    border: isDarkMode ? '#383838' : '#EEEEEE',
+    orange: '#E85D04',
+  };
+
+  const styles = getStyles(colors);
 
   const statuses = [
     'Pending',
@@ -25,7 +40,7 @@ export default function OrdersScreen() {
   const renderOrder = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.orderTitle}>
-        Order #{item.id.slice(-6)}
+        Order #{String(item.id).slice(-6)}
       </Text>
 
       <Text style={styles.date}>{item.date}</Text>
@@ -33,7 +48,10 @@ export default function OrdersScreen() {
       <Text style={styles.heading}>Items:</Text>
 
       {item.items.map((food, index) => (
-        <Text key={`${food.id}-${index}`} style={styles.food}>
+        <Text
+          key={`${food.id}-${index}`}
+          style={styles.food}
+        >
           {food.name} x {food.quantity}
         </Text>
       ))}
@@ -86,7 +104,7 @@ export default function OrdersScreen() {
       ) : (
         <FlatList
           data={[...orders].reverse()}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderOrder}
           contentContainerStyle={styles.list}
         />
@@ -95,86 +113,92 @@ export default function OrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F7F7F7',
-    padding: 15,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#222',
-  },
-  list: {
-    paddingBottom: 20,
-  },
-  card: {
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    elevation: 2,
-  },
-  orderTitle: {
-    fontSize: 19,
-    fontWeight: 'bold',
-    color: '#E85D04',
-  },
-  date: {
-    color: '#777',
-    marginTop: 5,
-    marginBottom: 12,
-  },
-  heading: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  food: {
-    fontSize: 15,
-    marginVertical: 2,
-  },
-  total: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
-  status: {
-    fontSize: 15,
-    marginTop: 10,
-    color: '#287A36',
-    fontWeight: 'bold',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
-    marginTop: 5,
-  },
-  statusButton: {
-    backgroundColor: '#EEEEEE',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 7,
-  },
-  selectedButton: {
-    backgroundColor: '#E85D04',
-  },
-  statusButtonText: {
-    color: '#333',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  selectedText: {
-    color: '#FFF',
-  },
-  empty: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#666',
-  },
-});
+const getStyles = (colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      padding: 15,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 15,
+      color: colors.text,
+    },
+    list: {
+      paddingBottom: 20,
+    },
+    card: {
+      backgroundColor: colors.card,
+      padding: 15,
+      borderRadius: 12,
+      marginBottom: 15,
+      elevation: 2,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    orderTitle: {
+      fontSize: 19,
+      fontWeight: 'bold',
+      color: colors.orange,
+    },
+    date: {
+      color: colors.secondary,
+      marginTop: 5,
+      marginBottom: 12,
+    },
+    heading: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      marginTop: 10,
+      marginBottom: 5,
+      color: colors.heading,
+    },
+    food: {
+      fontSize: 15,
+      marginVertical: 2,
+      color: colors.text,
+    },
+    total: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginTop: 12,
+      color: colors.text,
+    },
+    status: {
+      fontSize: 15,
+      marginTop: 10,
+      color: '#4CAF50',
+      fontWeight: 'bold',
+    },
+    statusRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 7,
+      marginTop: 5,
+    },
+    statusButton: {
+      backgroundColor: colors.button,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      borderRadius: 7,
+    },
+    selectedButton: {
+      backgroundColor: colors.orange,
+    },
+    statusButtonText: {
+      color: colors.buttonText,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    selectedText: {
+      color: '#FFFFFF',
+    },
+    empty: {
+      textAlign: 'center',
+      marginTop: 50,
+      fontSize: 16,
+      color: colors.secondary,
+    },
+  });

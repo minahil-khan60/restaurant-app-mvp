@@ -1,560 +1,614 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-View,
-Text,
-TextInput,
-TouchableOpacity,
-FlatList,
-StyleSheet,
-Alert,
-ActivityIndicator,
-Image,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 
 import { menuItems as menuData } from '../data/menu';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 
 const categories = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
 
 const FALLBACK_IMAGE =
-'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600';
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600';
 
 export default function MenuScreen({ navigation }) {
-const renderCount = useRef(0);
-renderCount.current += 1;
+  const renderCount = useRef(0);
+  renderCount.current += 1;
 
-const searchRef = useRef(null);
-const listRef = useRef(null);
-const debounceTimer = useRef(null);
-const previousQuery = useRef('');
+  const searchRef = useRef(null);
+  const listRef = useRef(null);
+  const debounceTimer = useRef(null);
+  const previousQuery = useRef('');
 
-const [menuItems, setMenuItems] = useState([]);
-const [isLoading, setIsLoading] = useState(true);
-const [error, setError] = useState(null);
-const [reloadKey, setReloadKey] = useState(0);
-const [refreshing, setRefreshing] = useState(false);
+  const { isDarkMode } = useTheme();
+  const { addToCart, cartCount } = useCart();
 
-const [searchText, setSearchText] = useState('');
-const [debouncedSearch, setDebouncedSearch] = useState('');
-const [isFocused, setIsFocused] = useState(false);
-const [recent, setRecent] = useState([]);
-const [showTop, setShowTop] = useState(false);
-const [selectedCategory, setSelectedCategory] = useState('All');
+  const colors = {
+    background: isDarkMode ? '#121212' : '#F5F5F5',
+    card: isDarkMode ? '#1E1E1E' : '#FFFFFF',
+    text: isDarkMode ? '#FFFFFF' : '#222222',
+    subtitle: isDarkMode ? '#BBBBBB' : '#666666',
+    input: isDarkMode ? '#252525' : '#FFFFFF',
+    border: isDarkMode ? '#555555' : '#CCCCCC',
+    category: isDarkMode ? '#333333' : '#E0E0E0',
+    chip: isDarkMode ? '#292929' : '#FFFFFF',
+    placeholder: isDarkMode ? '#BBBBBB' : '#777777',
+  };
 
-const { addToCart, cartCount } = useCart();
+  const [menuItems, setMenuItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-useEffect(() => {
-let active = true;
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [recent, setRecent] = useState([]);
+  const [showTop, setShowTop] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-setIsLoading(true);
-setError(null);
+  useEffect(() => {
+    let active = true;
 
-const timer = setTimeout(() => {
-  if (!active) return;
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    setMenuItems(menuData);
-    setIsLoading(false);
-  } catch (e) {
-    setError('Could not load menu. Please try again.');
-    setIsLoading(false);
-  }
-}, 1500);
+    const timer = setTimeout(() => {
+      if (!active) return;
 
-return () => {
-  active = false;
-  clearTimeout(timer);
-};
+      try {
+        setMenuItems(menuData);
+        setIsLoading(false);
+      } catch (e) {
+        setError('Could not load menu. Please try again.');
+        setIsLoading(false);
+      }
+    }, 1500);
 
-}, [reloadKey]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [reloadKey]);
 
-useEffect(() => {
-if (!refreshing) return;
+  useEffect(() => {
+    if (!refreshing) return;
 
-const timer = setTimeout(() => {
-  setRefreshing(false);
-}, 800);
+    const timer = setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
 
-return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
+  }, [refreshing]);
 
-}, [refreshing]);
+  useEffect(() => {
+    return () => clearTimeout(debounceTimer.current);
+  }, []);
 
-useEffect(() => {
-return () => clearTimeout(debounceTimer.current);
-}, []);
+  const handleSearchChange = (text) => {
+    setSearchText(text);
+    clearTimeout(debounceTimer.current);
 
-const handleSearchChange = (text) => {
-setSearchText(text);
-clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(text);
+    }, 400);
+  };
 
-debounceTimer.current = setTimeout(() => {
-  setDebouncedSearch(text);
-}, 400);
+  const clearSearch = () => {
+    clearTimeout(debounceTimer.current);
+    setSearchText('');
+    setDebouncedSearch('');
+    searchRef.current?.focus();
+  };
 
-};
+  useEffect(() => {
+    const query = debouncedSearch.trim();
 
-const clearSearch = () => {
-clearTimeout(debounceTimer.current);
-setSearchText('');
-setDebouncedSearch('');
-searchRef.current?.focus();
-};
+    if (
+      query &&
+      query.toLowerCase() !== previousQuery.current.toLowerCase()
+    ) {
+      previousQuery.current = query;
 
-useEffect(() => {
-const query = debouncedSearch.trim();
+      setRecent((old) =>
+        [
+          query,
+          ...old.filter(
+            (item) => item.toLowerCase() !== query.toLowerCase()
+          ),
+        ].slice(0, 5)
+      );
+    }
+  }, [debouncedSearch]);
 
-if (
-  query &&
-  query.toLowerCase() !== previousQuery.current.toLowerCase()
-) {
-  previousQuery.current = query;
+  const query = debouncedSearch.trim().toLowerCase();
 
-  setRecent((old) =>
-    [
-      query,
-      ...old.filter(
-        (item) => item.toLowerCase() !== query.toLowerCase()
-      ),
-    ].slice(0, 5)
-  );
-}
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCategory =
+      selectedCategory === 'All' ||
+      item.category === selectedCategory;
 
-}, [debouncedSearch]);
+    const matchesSearch = String(item.name || '')
+      .toLowerCase()
+      .includes(query);
 
-const query = debouncedSearch.trim().toLowerCase();
+    return matchesCategory && matchesSearch;
+  });
 
-const filteredItems = menuItems.filter((item) => {
-const matchesCategory =
-selectedCategory === 'All' ||
-item.category === selectedCategory;
+  const renderItem = ({ item }) => {
+    const imageSource =
+      typeof item.image === 'number'
+        ? item.image
+        : typeof item.image === 'string' &&
+          item.image.trim().startsWith('http')
+        ? { uri: item.image.trim() }
+        : { uri: FALLBACK_IMAGE };
 
-const matchesSearch = String(item.name || '')
-  .toLowerCase()
-  .includes(query);
+    return (
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.card },
+          !item.isAvailable && styles.cardUnavailable,
+        ]}
+      >
+        <Image
+          source={imageSource}
+          style={styles.foodImage}
+          resizeMode="cover"
+          onError={() => console.log('Image failed:', item.name)}
+        />
 
-return matchesCategory && matchesSearch;
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, { color: colors.text }]}>
+            {item.name}
+          </Text>
 
-});
+          {item.isSpecial && (
+            <Text style={styles.badge}>Daily Special</Text>
+          )}
+        </View>
 
-const renderItem = ({ item }) => {
-const imageSource =
-typeof item.image === 'number'
-? item.image
-: typeof item.image === 'string' &&
-item.image.trim().startsWith('http')
-? { uri: item.image.trim() }
-: { uri: FALLBACK_IMAGE };
+        <Text style={[styles.description, { color: colors.subtitle }]}>
+          {item.description}
+        </Text>
 
-return (
-  <View
-    style={[
-      styles.card,
-      !item.isAvailable && styles.cardUnavailable,
-    ]}
-  >
-    <Image
-      source={imageSource}
-      style={styles.foodImage}
-      resizeMode="cover"
-      onError={() => console.log('Image failed:', item.name)}
-    />
+        <Text style={[styles.price, { color: colors.text }]}>
+          Rs. {item.price}
+        </Text>
 
-    <View style={styles.nameRow}>
-      <Text style={styles.name}>{item.name}</Text>
+        <Text
+          style={{
+            color: item.isAvailable
+              ? (isDarkMode ? '#66BB6A' : 'green')
+              : '#EF5350',
+            marginBottom: 10,
+          }}
+        >
+          {item.isAvailable ? 'Available' : 'Not Available'}
+        </Text>
 
-      {item.isSpecial && (
-        <Text style={styles.badge}>Daily Special</Text>
-      )}
-    </View>
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            !item.isAvailable && styles.disabledButton,
+          ]}
+          disabled={!item.isAvailable}
+          onPress={() => {
+            addToCart(item);
+            Alert.alert('Success', `${item.name} added to cart!`);
+          }}
+        >
+          <Text style={styles.buttonText}>Add to Cart</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
-    <Text style={styles.description}>{item.description}</Text>
-    <Text style={styles.price}>Rs. {item.price}</Text>
-
-    <Text
-      style={{
-        color: item.isAvailable ? 'green' : 'red',
-        marginBottom: 10,
-      }}
+  return (
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {item.isAvailable ? 'Available' : 'Not Available'}
-    </Text>
+      <Text style={[styles.menuTitle, { color: colors.text }]}>
+        Menu ({filteredItems.length})
+      </Text>
 
-    <TouchableOpacity
-      style={[
-        styles.addButton,
-        !item.isAvailable && styles.disabledButton,
-      ]}
-      disabled={!item.isAvailable}
-      onPress={() => {
-        addToCart(item);
-        Alert.alert('Success', `${item.name} added to cart!`);
-      }}
-    >
-      <Text style={styles.buttonText}>Add to Cart</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-};
-
-return (
-<View style={styles.container}>
-<Text style={styles.menuTitle}>
-Menu ({filteredItems.length})
-</Text>
-
-  <TouchableOpacity
-    style={styles.cartButton}
-    onPress={() => navigation.navigate('Cart')}
-  >
-    <Text style={styles.buttonText}>View Cart ({cartCount})</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={styles.historyButton}
-    onPress={() => navigation.navigate('OrderHistory')}
-  >
-    <Text style={styles.buttonText}>My Order History</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={styles.historyButton}
-    onPress={() => navigation.navigate('Reservation')}
-  >
-    <Text style={styles.buttonText}>Book a Table</Text>
-  </TouchableOpacity>
-
-  {/* New Profile Button */}
-  <TouchableOpacity
-    style={styles.profileButton}
-    onPress={() => navigation.navigate('Profile')}
-  >
-    <Text style={styles.buttonText}>My Profile</Text>
-  </TouchableOpacity>
-
-  <View style={styles.searchRow}>
-    <TouchableOpacity onPress={() => searchRef.current?.focus()}>
-      <Text style={styles.searchIcon}>🔍</Text>
-    </TouchableOpacity>
-
-    <TextInput
-      ref={searchRef}
-      style={styles.search}
-      placeholder="Search food..."
-      value={searchText}
-      onChangeText={handleSearchChange}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
-    />
-
-    {searchText.length > 0 && (
-      <TouchableOpacity onPress={clearSearch}>
-        <Text style={styles.clearIcon}>✕</Text>
+      <TouchableOpacity
+        style={styles.cartButton}
+        onPress={() => navigation.navigate('Cart')}
+      >
+        <Text style={styles.buttonText}>View Cart ({cartCount})</Text>
       </TouchableOpacity>
-    )}
-  </View>
 
-  {isFocused && searchText === '' && recent.length > 0 && (
-    <View style={styles.recentContainer}>
-      <Text style={styles.recentTitle}>Recent searches</Text>
+      <TouchableOpacity
+        style={styles.historyButton}
+        onPress={() => navigation.navigate('OrderHistory')}
+      >
+        <Text style={styles.buttonText}>My Order History</Text>
+      </TouchableOpacity>
 
-      <View style={styles.recentRow}>
-        {recent.map((item) => (
+      <TouchableOpacity
+        style={styles.historyButton}
+        onPress={() => navigation.navigate('Reservation')}
+      >
+        <Text style={styles.buttonText}>Book a Table</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.profileButton}
+        onPress={() => navigation.navigate('Profile')}
+      >
+        <Text style={styles.buttonText}>My Profile</Text>
+      </TouchableOpacity>
+
+      <View
+        style={[
+          styles.searchRow,
+          {
+            backgroundColor: colors.input,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={() => searchRef.current?.focus()}>
+          <Text style={styles.searchIcon}>🔍</Text>
+        </TouchableOpacity>
+
+        <TextInput
+          ref={searchRef}
+          style={[
+            styles.search,
+            {
+              backgroundColor: colors.input,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="Search food..."
+          placeholderTextColor={colors.placeholder}
+          value={searchText}
+          onChangeText={handleSearchChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          autoCapitalize="none"
+        />
+
+        {searchText.length > 0 && (
+          <TouchableOpacity onPress={clearSearch}>
+            <Text style={[styles.clearIcon, { color: colors.text }]}>
+              ✕
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {isFocused && searchText === '' && recent.length > 0 && (
+        <View style={styles.recentContainer}>
+          <Text style={[styles.recentTitle, { color: colors.subtitle }]}>
+            Recent searches
+          </Text>
+
+          <View style={styles.recentRow}>
+            {recent.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[
+                  styles.recentChip,
+                  {
+                    backgroundColor: colors.chip,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  clearTimeout(debounceTimer.current);
+                  setSearchText(item);
+                  setDebouncedSearch(item);
+                }}
+              >
+                <Text style={{ color: colors.text }}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.categories}>
+        {categories.map((item) => (
           <TouchableOpacity
             key={item}
-            style={styles.recentChip}
-            onPress={() => {
-              clearTimeout(debounceTimer.current);
-              setSearchText(item);
-              setDebouncedSearch(item);
-            }}
+            style={[
+              styles.categoryButton,
+              {
+                backgroundColor:
+                  selectedCategory === item
+                    ? '#16834A'
+                    : colors.category,
+              },
+            ]}
+            onPress={() => setSelectedCategory(item)}
           >
-            <Text>{item}</Text>
+            <Text
+              style={[
+                styles.categoryText,
+                {
+                  color:
+                    selectedCategory === item
+                      ? '#FFFFFF'
+                      : colors.text,
+                  fontWeight:
+                    selectedCategory === item ? 'bold' : 'normal',
+                },
+              ]}
+            >
+              {item}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
-    </View>
-  )}
 
-  <View style={styles.categories}>
-    {categories.map((item) => (
-      <TouchableOpacity
-        key={item}
-        style={[
-          styles.categoryButton,
-          selectedCategory === item && styles.selectedCategory,
-        ]}
-        onPress={() => setSelectedCategory(item)}
-      >
-        <Text
-          style={[
-            styles.categoryText,
-            selectedCategory === item && styles.selectedCategoryText,
-          ]}
+      <Text style={styles.debug}>
+        Screen renders: {renderCount.current}
+      </Text>
+
+      {isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator
+            size="large"
+            color={isDarkMode ? '#66BB6A' : '#16834A'}
+          />
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Loading menu...
+          </Text>
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => setReloadKey((key) => key + 1)}
+          >
+            <Text style={styles.buttonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={filteredItems}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            setReloadKey((key) => key + 1);
+          }}
+          onScroll={(event) => {
+            setShowTop(event.nativeEvent.contentOffset.y > 300);
+          }}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <Text
+              style={[
+                styles.emptyText,
+                { color: colors.subtitle },
+              ]}
+            >
+              No dishes match "{debouncedSearch}". Try another search.
+            </Text>
+          }
+        />
+      )}
+
+      {showTop && (
+        <TouchableOpacity
+          style={styles.topButton}
+          onPress={() =>
+            listRef.current?.scrollToOffset({
+              offset: 0,
+              animated: true,
+            })
+          }
         >
-          {item}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-
-  <Text style={styles.debug}>
-    Screen renders: {renderCount.current}
-  </Text>
-
-  {isLoading ? (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color="#16834A" />
-      <Text style={styles.loadingText}>Loading menu...</Text>
+          <Text style={styles.buttonText}>↑ Top</Text>
+        </TouchableOpacity>
+      )}
     </View>
-  ) : error ? (
-    <View style={styles.center}>
-      <Text style={styles.errorText}>{error}</Text>
-
-      <TouchableOpacity
-        style={styles.retryButton}
-        onPress={() => setReloadKey((key) => key + 1)}
-      >
-        <Text style={styles.buttonText}>Retry</Text>
-      </TouchableOpacity>
-    </View>
-  ) : (
-    <FlatList
-      ref={listRef}
-      data={filteredItems}
-      keyExtractor={(item) => String(item.id)}
-      renderItem={renderItem}
-      refreshing={refreshing}
-      onRefresh={() => {
-        setRefreshing(true);
-        setReloadKey((key) => key + 1);
-      }}
-      onScroll={(event) => {
-        setShowTop(event.nativeEvent.contentOffset.y > 300);
-      }}
-      scrollEventThrottle={16}
-      keyboardShouldPersistTaps="handled"
-      ListEmptyComponent={
-        <Text style={styles.emptyText}>
-          No dishes match "{debouncedSearch}". Try another search.
-        </Text>
-      }
-    />
-  )}
-
-  {showTop && (
-    <TouchableOpacity
-      style={styles.topButton}
-      onPress={() =>
-        listRef.current?.scrollToOffset({
-          offset: 0,
-          animated: true,
-        })
-      }
-    >
-      <Text style={styles.buttonText}>↑ Top</Text>
-    </TouchableOpacity>
-  )}
-</View>
-
-);
+  );
 }
 
 const styles = StyleSheet.create({
-container: {
-flex: 1,
-backgroundColor: '#F5F5F5',
-padding: 15,
-},
-menuTitle: {
-fontSize: 22,
-fontWeight: 'bold',
-marginBottom: 10,
-color: '#222222',
-},
-cartButton: {
-backgroundColor: '#16834A',
-padding: 13,
-borderRadius: 8,
-alignItems: 'center',
-marginBottom: 10,
-},
-historyButton: {
-backgroundColor: '#2457A7',
-padding: 13,
-borderRadius: 8,
-alignItems: 'center',
-marginBottom: 10,
-},
-profileButton: {
-backgroundColor: '#7B3FA1',
-padding: 13,
-borderRadius: 8,
-alignItems: 'center',
-marginBottom: 10,
-},
-searchRow: {
-flexDirection: 'row',
-alignItems: 'center',
-marginBottom: 12,
-},
-searchIcon: {
-fontSize: 20,
-marginRight: 8,
-},
-clearIcon: {
-fontSize: 20,
-marginLeft: 8,
-},
-search: {
-flex: 1,
-backgroundColor: '#FFFFFF',
-borderWidth: 1,
-borderColor: '#CCCCCC',
-borderRadius: 8,
-padding: 12,
-fontSize: 16,
-},
-recentContainer: {
-marginBottom: 8,
-},
-recentTitle: {
-color: '#666666',
-},
-recentRow: {
-flexDirection: 'row',
-flexWrap: 'wrap',
-marginTop: 6,
-},
-recentChip: {
-paddingHorizontal: 12,
-paddingVertical: 7,
-borderRadius: 18,
-borderWidth: 1,
-borderColor: '#CCCCCC',
-backgroundColor: '#FFFFFF',
-marginRight: 8,
-marginBottom: 6,
-},
-categories: {
-flexDirection: 'row',
-flexWrap: 'wrap',
-marginBottom: 10,
-},
-categoryButton: {
-paddingHorizontal: 12,
-paddingVertical: 10,
-backgroundColor: '#E0E0E0',
-borderRadius: 20,
-marginRight: 8,
-marginBottom: 6,
-},
-selectedCategory: {
-backgroundColor: '#16834A',
-},
-categoryText: {
-color: '#222222',
-fontSize: 14,
-},
-selectedCategoryText: {
-color: '#FFFFFF',
-fontWeight: 'bold',
-},
-debug: {
-fontSize: 11,
-color: '#888888',
-marginBottom: 6,
-},
-center: {
-flex: 1,
-justifyContent: 'center',
-alignItems: 'center',
-},
-loadingText: {
-marginTop: 8,
-},
-errorText: {
-color: 'red',
-marginBottom: 12,
-},
-card: {
-backgroundColor: '#FFFFFF',
-padding: 15,
-borderRadius: 10,
-marginBottom: 12,
-elevation: 2,
-},
-cardUnavailable: {
-opacity: 0.5,
-},
-foodImage: {
-width: '100%',
-height: 180,
-borderRadius: 10,
-marginBottom: 12,
-backgroundColor: '#EEEEEE',
-},
-nameRow: {
-flexDirection: 'row',
-alignItems: 'center',
-flexWrap: 'wrap',
-},
-name: {
-fontSize: 19,
-fontWeight: 'bold',
-marginBottom: 5,
-marginRight: 8,
-},
-badge: {
-backgroundColor: '#F1C40F',
-fontSize: 12,
-fontWeight: 'bold',
-paddingHorizontal: 8,
-paddingVertical: 3,
-borderRadius: 6,
-overflow: 'hidden',
-},
-description: {
-color: '#666666',
-marginBottom: 8,
-fontSize: 15,
-},
-price: {
-fontSize: 16,
-fontWeight: 'bold',
-marginBottom: 8,
-},
-addButton: {
-backgroundColor: '#16834A',
-padding: 12,
-borderRadius: 7,
-alignItems: 'center',
-},
-disabledButton: {
-backgroundColor: '#999999',
-},
-retryButton: {
-backgroundColor: '#16834A',
-paddingHorizontal: 24,
-paddingVertical: 12,
-borderRadius: 8,
-},
-topButton: {
-position: 'absolute',
-right: 16,
-bottom: 20,
-backgroundColor: '#16834A',
-paddingHorizontal: 16,
-paddingVertical: 10,
-borderRadius: 24,
-},
-buttonText: {
-color: '#FFFFFF',
-fontWeight: 'bold',
-},
-emptyText: {
-textAlign: 'center',
-marginTop: 25,
-fontSize: 16,
-},
+  container: {
+    flex: 1,
+    padding: 15,
+  },
+  menuTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  cartButton: {
+    backgroundColor: '#16834A',
+    padding: 13,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  historyButton: {
+    backgroundColor: '#2457A7',
+    padding: 13,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  profileButton: {
+    backgroundColor: '#7B3FA1',
+    padding: 13,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  searchIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  clearIcon: {
+    fontSize: 20,
+    marginLeft: 8,
+    paddingHorizontal: 5,
+  },
+  search: {
+    flex: 1,
+    borderWidth: 0,
+    padding: 12,
+    fontSize: 16,
+  },
+  recentContainer: {
+    marginBottom: 8,
+  },
+  recentTitle: {
+    fontSize: 14,
+  },
+  recentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  recentChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  categories: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  categoryButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  categoryText: {
+    fontSize: 14,
+  },
+  debug: {
+    fontSize: 11,
+    color: '#888888',
+    marginBottom: 6,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 8,
+  },
+  errorText: {
+    color: '#EF5350',
+    marginBottom: 12,
+  },
+  card: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  cardUnavailable: {
+    opacity: 0.5,
+  },
+  foodImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 10,
+    marginBottom: 12,
+    backgroundColor: '#EEEEEE',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  name: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    marginRight: 8,
+  },
+  badge: {
+    backgroundColor: '#F1C40F',
+    color: '#222222',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  description: {
+    marginBottom: 8,
+    fontSize: 15,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  addButton: {
+    backgroundColor: '#16834A',
+    padding: 12,
+    borderRadius: 7,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#999999',
+  },
+  retryButton: {
+    backgroundColor: '#16834A',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  topButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 20,
+    backgroundColor: '#16834A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 25,
+    fontSize: 16,
+  },
 });

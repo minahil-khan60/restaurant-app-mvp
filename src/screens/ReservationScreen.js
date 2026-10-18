@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import useReservation from '../hooks/useReservation';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ReservationScreen() {
   const {
@@ -31,6 +32,24 @@ export default function ReservationScreen() {
     createReservation,
     cancelReservation,
   } = useReservation();
+
+  const { isDarkMode } = useTheme();
+
+  const colors = {
+    background: isDarkMode ? '#121212' : '#F5F5F5',
+    card: isDarkMode ? '#242424' : '#FFFFFF',
+    input: isDarkMode ? '#303030' : '#FFFFFF',
+    text: isDarkMode ? '#FFFFFF' : '#222222',
+    secondary: isDarkMode ? '#BBBBBB' : '#666666',
+    border: isDarkMode ? '#484848' : '#CCCCCC',
+    option: isDarkMode ? '#383838' : '#E0E0E0',
+    green: '#16834A',
+    warning: '#FF6B6B',
+    cancelBackground: isDarkMode ? '#442626' : '#FCE8E8',
+    cancelText: '#FF6B6B',
+  };
+
+  const styles = getStyles(colors);
 
   const handleBooking = () => {
     const result = createReservation();
@@ -59,18 +78,20 @@ export default function ReservationScreen() {
           setTable('');
         }}
         placeholder="2026-12-25"
+        placeholderTextColor={colors.secondary}
       />
 
       <Text style={styles.label}>Number of Guests (1–12)</Text>
       <TextInput
         style={styles.input}
-        value={partySize}
+        value={String(partySize)}
         onChangeText={(value) => {
           setPartySize(value);
           setTable('');
         }}
         keyboardType="number-pad"
         placeholder="Enter guests"
+        placeholderTextColor={colors.secondary}
       />
 
       <Text style={styles.label}>Select Time</Text>
@@ -134,6 +155,7 @@ export default function ReservationScreen() {
         value={contactName}
         onChangeText={setContactName}
         placeholder="Enter your name"
+        placeholderTextColor={colors.secondary}
       />
 
       <Text style={styles.label}>Mobile Number</Text>
@@ -144,28 +166,42 @@ export default function ReservationScreen() {
         keyboardType="phone-pad"
         maxLength={12}
         placeholder="03XX-XXXXXXX"
+        placeholderTextColor={colors.secondary}
       />
 
       <TouchableOpacity
         style={styles.bookButton}
         onPress={handleBooking}
       >
-        <Text style={styles.bookText}>Confirm Reservation</Text>
+        <Text style={styles.bookText}>
+          Confirm Reservation
+        </Text>
       </TouchableOpacity>
 
       <Text style={styles.subheading}>My Reservations</Text>
 
       {reservations.length === 0 ? (
-        <Text style={styles.empty}>No reservations yet.</Text>
+        <Text style={styles.empty}>
+          No reservations yet.
+        </Text>
       ) : (
         reservations.map((item) => (
           <View key={item.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{item.tableName}</Text>
-            <Text>Date: {item.date}</Text>
-            <Text>Time: {item.time}</Text>
-            <Text>Guests: {item.partySize}</Text>
-            <Text>Name: {item.contactName}</Text>
-            <Text>Status: {item.status}</Text>
+            <Text style={styles.cardTitle}>
+              {item.tableName}
+            </Text>
+
+            <Text style={styles.details}>Date: {item.date}</Text>
+            <Text style={styles.details}>Time: {item.time}</Text>
+            <Text style={styles.details}>
+              Guests: {item.partySize}
+            </Text>
+            <Text style={styles.details}>
+              Name: {item.contactName}
+            </Text>
+            <Text style={styles.details}>
+              Status: {item.status}
+            </Text>
 
             <TouchableOpacity
               style={styles.cancelButton}
@@ -195,102 +231,113 @@ export default function ReservationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  content: {
-    padding: 18,
-    paddingBottom: 35,
-  },
-  heading: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    color: '#16834A',
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 14,
-    marginBottom: 7,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  options: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  option: {
-    backgroundColor: '#E0E0E0',
-    padding: 11,
-    borderRadius: 8,
-    marginBottom: 3,
-  },
-  selected: {
-    backgroundColor: '#16834A',
-  },
-  optionText: {
-    color: '#222222',
-  },
-  selectedText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  warning: {
-    color: '#B00020',
-    marginTop: 8,
-  },
-  bookButton: {
-    backgroundColor: '#16834A',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 25,
-  },
-  bookText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  subheading: {
-    fontSize: 21,
-    fontWeight: 'bold',
-    marginTop: 28,
-    marginBottom: 12,
-  },
-  empty: {
-    color: '#666666',
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 12,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  cancelButton: {
-    backgroundColor: '#FCE8E8',
-    padding: 10,
-    borderRadius: 7,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  cancelText: {
-    color: '#B00020',
-    fontWeight: 'bold',
-  },
-});
+const getStyles = (colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 18,
+      paddingBottom: 35,
+    },
+    heading: {
+      fontSize: 25,
+      fontWeight: 'bold',
+      color: colors.green,
+      marginBottom: 15,
+    },
+    label: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 14,
+      marginBottom: 7,
+    },
+    input: {
+      backgroundColor: colors.input,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+    },
+    options: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    option: {
+      backgroundColor: colors.option,
+      padding: 11,
+      borderRadius: 8,
+      marginBottom: 3,
+    },
+    selected: {
+      backgroundColor: colors.green,
+    },
+    optionText: {
+      color: colors.text,
+    },
+    selectedText: {
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+    },
+    warning: {
+      color: colors.warning,
+      marginTop: 8,
+    },
+    bookButton: {
+      backgroundColor: colors.green,
+      padding: 15,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 25,
+    },
+    bookText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    subheading: {
+      fontSize: 21,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 28,
+      marginBottom: 12,
+    },
+    empty: {
+      color: colors.secondary,
+    },
+    card: {
+      backgroundColor: colors.card,
+      padding: 15,
+      borderRadius: 10,
+      marginBottom: 12,
+      elevation: 2,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 6,
+    },
+    details: {
+      color: colors.secondary,
+      marginTop: 3,
+    },
+    cancelButton: {
+      backgroundColor: colors.cancelBackground,
+      padding: 10,
+      borderRadius: 7,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    cancelText: {
+      color: colors.cancelText,
+      fontWeight: 'bold',
+    },
+  });
