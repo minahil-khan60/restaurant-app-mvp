@@ -15,18 +15,23 @@ jobs:
 
       - name: Fix and Create Android
         run: |
-          rm -f capacitor.config.json
-          rm -rf android
+          rm -rf android capacitor.config.json
+          mkdir -p www
+          if [ -f index.html ]; then cp index.html www/index.html; fi
+          if [ ! -f www/index.html ]; then echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Restaurant App</title></head><body><h1>Restaurant App is Running</h1></body></html>' > www/index.html; fi
+          ls -la
+          ls -la www
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          echo '{"appId":"com.minahil.restaurant","appName":"RestaurantApp","webDir":".","bundledWebRuntime":false}' > capacitor.config.json
-          cat capacitor.config.json
+          npx cap init RestaurantApp com.minahil.restaurant --web-dir=www
+
+      - name: Add Android
+        run: |
           npx cap add android
-          ls -la
+          npx cap copy android
 
       - name: Build APK
         run: |
-          npx cap copy
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
