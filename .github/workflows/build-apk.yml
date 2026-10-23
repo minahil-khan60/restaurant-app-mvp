@@ -12,14 +12,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Build Web App
-        run: |
-          npm install
-          npm run build
-      - name: Make Android Project
+      - name: Install
+        run: npm install || true
+      - name: Make Android
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init RestaurantApp com.minahil.restaurant --web-dir=build --npm-client npm || true
+          npx cap init RestaurantApp com.minahil.restaurant --web-dir=. --npm-client npm || true
           npx cap add android || true
           npx cap copy
       - name: Build APK
