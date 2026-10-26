@@ -1,4 +1,4 @@
-import 'react-native-gesture-handler'; // <-- YE LINE SAB SE UPAR LAZMI HAI
+import 'react-native-gesture-handler'; 
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
