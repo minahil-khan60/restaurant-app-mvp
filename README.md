@@ -44,4 +44,6 @@ If filtering effect deps is [], it runs only once on mount. When selectedCategor
 In /screenshots folder
 
 ## Demo Video
-Paste your 3-min drive link here after recording
+Watch the Restaurant App Demo:
+
+[Click Here to Watch the App Demo on YouTube](https://www.youtube.com/shorts/F1PJzqSFJ78)
